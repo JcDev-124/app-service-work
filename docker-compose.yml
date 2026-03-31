@@ -1,0 +1,27 @@
+services:
+  app:
+    container_name: nest-app-dev
+    build:
+      context: .
+      target: development
+    command: npm run start:dev
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  app-prod:
+    container_name: nest-app-prod
+    build:
+      context: .
+      target: production
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3001:3000"
+    profiles:
+      - prod
