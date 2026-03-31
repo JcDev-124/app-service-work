@@ -4,8 +4,10 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
-describe('AppController (e2e)', () => {
+describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
+  const password = '123456';
+  const email = `user${Date.now()}@example.com`;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -16,11 +18,43 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/auth/register (POST)', () => {
     return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201)
+      .expect((response) => {
+        expect(response.body.accessToken).toBeDefined();
+        expect(response.body.refreshToken).toBeDefined();
+        expect(response.body.tokenType).toBe('Bearer');
+      });
+  });
+
+  it('/auth/login (POST) and /auth/refresh (POST)', async () => {
+    await request(app.getHttpServer()).post('/auth/register').send({
+      email,
+      password,
+    });
+
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email, password })
+      .expect(201);
+
+    expect(login.body.accessToken).toBeDefined();
+    expect(login.body.refreshToken).toBeDefined();
+
+    const refresh = await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ refreshToken: login.body.refreshToken })
+      .expect(201);
+
+    expect(refresh.body.accessToken).toBeDefined();
+    expect(refresh.body.refreshToken).toBeDefined();
+    expect(refresh.body.tokenType).toBe('Bearer');
   });
 
   afterEach(async () => {

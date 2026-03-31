@@ -35,3 +35,6 @@ Thumbs.db
 # misc
 tmp/
 temp/
+
+# local development rules
+DEV_RULES.local.md
